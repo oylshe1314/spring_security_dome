@@ -11,6 +11,6 @@ public class ExceptionController {
     @ResponseBody
     @ExceptionHandler(Exception.class)
     public ResponseParameter handler(Exception exception) {
-        return ResponseParameter.fail(-1, "请求异常");
+        return ResponseParameter.fail(-1, exception.getMessage());
     }
 }
