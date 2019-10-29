@@ -1,21 +1,17 @@
 package com.example.dome.application.service;
 
-import com.example.dome.application.dto.UserChangePasswordParameter;
-import com.example.dome.application.dto.UserSignUpParameter;
+import com.example.dome.application.dto.ChangePassword;
+import com.example.dome.application.dto.SignUp;
 import com.example.dome.application.entity.User;
 import com.example.dome.application.repository.UserRepository;
-import com.example.dome.application.util.VariableCheck;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -23,20 +19,11 @@ public class UserService implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> optional = this.userRepository.findByUsername(username);
-        if (!optional.isPresent()) {
-            throw new UsernameNotFoundException("用户名或者密码错误");
-        }
-        return optional.get();
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
     }
 
-    public void signUp(UserSignUpParameter parameter) throws Exception {
-        if (!VariableCheck.notEmpty(parameter.username, parameter.password, parameter.nickname)) {
-            throw new Exception("参数错误");
-        }
-
+    public void signUp(SignUp parameter) throws Exception {
         if (userRepository.existsByUsername(parameter.username)) {
             throw new Exception("用户名已存在");
         }
@@ -50,14 +37,10 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    public void changePassword(long id, UserChangePasswordParameter parameter) throws Exception {
+    public void changePassword(long id, ChangePassword parameter) throws Exception {
         Optional<User> optional = userRepository.findById(id);
         if (!optional.isPresent()) {
             throw new Exception("请求异常");
-        }
-
-        if (!VariableCheck.notEmpty(parameter.oldPassword, parameter.newPassword)) {
-            throw new Exception("参数错误");
         }
 
         User user = optional.get();

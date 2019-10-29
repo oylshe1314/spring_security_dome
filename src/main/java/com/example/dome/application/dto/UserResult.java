@@ -13,7 +13,6 @@ public class UserResult implements Serializable {
     public String email;
     public String mobile;
     public String qq;
-    public int state;
     public String regDt;
     public String avatar;
 
@@ -28,7 +27,6 @@ public class UserResult implements Serializable {
         this.email = user.email;
         this.mobile = user.mobile;
         this.qq = user.qq;
-        this.state = user.state;
         this.regDt = user.regDt.toString();
         this.avatar = user.avatar;
     }

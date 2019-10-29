@@ -13,15 +13,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class RestAccessDeniedHandler extends CustomRestHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
+public class UserAccessDeniedHandler extends CustomRestHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        responseJson(response, ResponseParameter.fail(-1, "请先登录"));
+        responseJson(response, ResponseParameter.fail("未登录"));
     }
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        responseJson(response, ResponseParameter.fail(-1, "未授权"));
+        responseJson(response, ResponseParameter.fail("未授权"));
     }
 }

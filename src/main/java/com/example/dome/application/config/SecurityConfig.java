@@ -1,10 +1,11 @@
 package com.example.dome.application.config;
 
-import com.example.dome.application.filter.RestLoginFilter;
-import com.example.dome.application.handler.RestAccessDeniedHandler;
-import com.example.dome.application.handler.RestLoginHandler;
-import com.example.dome.application.handler.RestLogoutHandler;
-import com.example.dome.application.service.UserService;
+import com.example.dome.application.auth.UserAuthorityManager;
+import com.example.dome.application.auth.UserAuthProvider;
+import com.example.dome.application.filter.UserLoginFilter;
+import com.example.dome.application.handler.UserAccessDeniedHandler;
+import com.example.dome.application.handler.UserLoginHandler;
+import com.example.dome.application.handler.UserLogoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -22,16 +22,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    RestLoginHandler restLoginHandler;
+    private UserLoginHandler userLoginHandler;
 
     @Autowired
-    RestLogoutHandler restLogoutHandler;
+    private UserLogoutHandler userLogoutHandler;
 
     @Autowired
-    RestAccessDeniedHandler jsonAccessDeniedHandler;
+    private UserAuthProvider userAuthProvider;
 
     @Autowired
-    UserService userService;
+    private UserAccessDeniedHandler jsonAccessDeniedHandler;
+
+    @Autowired
+    private UserAuthorityManager userAuthorityManager;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -40,7 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
+        auth.authenticationProvider(userAuthProvider);
     }
 
     @Override
@@ -49,19 +52,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .httpBasic().authenticationEntryPoint(jsonAccessDeniedHandler).and()
                 .exceptionHandling().accessDeniedHandler(jsonAccessDeniedHandler).and()
                 .authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/user/sign-up").permitAll()
-                .anyRequest().authenticated().and()
-                .logout().logoutUrl("/user/logout").addLogoutHandler(restLogoutHandler).logoutSuccessHandler(restLogoutHandler);
+                .antMatchers(HttpMethod.POST, "/user/signUp").permitAll()
+                .antMatchers("/other/**").permitAll()
+                .anyRequest().authenticated().accessDecisionManager(userAuthorityManager).and()
+                .logout().logoutUrl("/user/logout").addLogoutHandler(userLogoutHandler).logoutSuccessHandler(userLogoutHandler);
 
-        http.addFilterAt(restLoginFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAt(userLoginFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
-    public RestLoginFilter restLoginFilter() throws Exception {
-        RestLoginFilter filter = new RestLoginFilter();
-        filter.setFilterProcessesUrl("/user/login");
+    public UserLoginFilter userLoginFilter() throws Exception {
+        UserLoginFilter filter = new UserLoginFilter("/user/login");
         filter.setAuthenticationManager(authenticationManager());
-        filter.setAuthenticationSuccessHandler(restLoginHandler);
-        filter.setAuthenticationFailureHandler(restLoginHandler);
+        filter.setAuthenticationSuccessHandler(userLoginHandler);
+        filter.setAuthenticationFailureHandler(userLoginHandler);
         return filter;
     }
 

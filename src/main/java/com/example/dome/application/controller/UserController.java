@@ -2,10 +2,11 @@ package com.example.dome.application.controller;
 
 import com.example.dome.application.common.RequestParameter;
 import com.example.dome.application.common.ResponseParameter;
-import com.example.dome.application.dto.UserChangePasswordParameter;
-import com.example.dome.application.dto.UserSignUpParameter;
+import com.example.dome.application.dto.ChangePassword;
+import com.example.dome.application.dto.SignUp;
 import com.example.dome.application.entity.User;
 import com.example.dome.application.service.UserService;
+import com.example.dome.application.util.ParameterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,20 +21,20 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    @RequestMapping(value = "/sign-up", method = RequestMethod.POST)
-    public ResponseParameter signUp(@RequestBody RequestParameter<UserSignUpParameter> requestParameter) throws Exception {
-        if (requestParameter.data == null) {
-            throw new Exception("参数错误");
-        }
+    @RequestMapping(value = "/signUp", method = RequestMethod.POST)
+    public ResponseParameter signUp(@RequestBody RequestParameter<SignUp> requestParameter) throws Exception {
+        SignUp data = requestParameter.getDataNonNull();
+        ParameterUtils.nonEmpty(data.username, data.password, data.username);
+
         userService.signUp(requestParameter.data);
+
         return ResponseParameter.success();
     }
 
-    @RequestMapping(value = "/change-password", method = RequestMethod.POST)
-    public ResponseParameter changePassword(@RequestBody RequestParameter<UserChangePasswordParameter> requestParameter, Authentication authentication) throws Exception {
-        if (requestParameter.data == null) {
-            throw new Exception("参数错误");
-        }
+    @RequestMapping(value = "/changePassword", method = RequestMethod.POST)
+    public ResponseParameter changePassword(@RequestBody RequestParameter<ChangePassword> requestParameter, Authentication authentication) throws Exception {
+        ChangePassword data = requestParameter.getDataNonNull();
+        ParameterUtils.nonEmpty(data.oldPassword, data.newPassword);
 
         User user = (User) authentication.getPrincipal();
 

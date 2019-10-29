@@ -14,12 +14,17 @@ repositories {
 }
 
 dependencies {
-    runtime 'mysql:mysql-connector-java'
+    runtime 'mysql:mysql-connector-java:8.0.18'
     runtime 'org.bouncycastle:bcprov-jdk15on:1.62'
 
-    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
-    compile 'org.springframework.boot:spring-boot-starter-security'
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
-    testCompile 'org.springframework.security:spring-security-test'
+    runtime "io.jsonwebtoken:jjwt-impl:0.10.7"
+    runtime "io.jsonwebtoken:jjwt-jackson:0.10.7"
+
+    implementation "io.jsonwebtoken:jjwt-api:0.10.7"
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 }

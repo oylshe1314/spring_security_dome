@@ -14,7 +14,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 @Component
-public class RestLogoutHandler extends CustomRestHandler implements LogoutHandler, LogoutSuccessHandler {
+public class UserLogoutHandler extends CustomRestHandler implements LogoutHandler, LogoutSuccessHandler {
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
