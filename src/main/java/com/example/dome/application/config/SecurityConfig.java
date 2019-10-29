@@ -2,6 +2,7 @@ package com.example.dome.application.config;
 
 import com.example.dome.application.auth.UserAuthorityManager;
 import com.example.dome.application.auth.UserAuthProvider;
+import com.example.dome.application.filter.TokenAuthFilter;
 import com.example.dome.application.filter.UserLoginFilter;
 import com.example.dome.application.handler.UserAccessDeniedHandler;
 import com.example.dome.application.handler.UserLoginHandler;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -36,6 +38,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserAuthorityManager userAuthorityManager;
 
+    @Autowired
+    private TokenAuthFilter tokenAuthFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new SCryptPasswordEncoder();
@@ -49,7 +54,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
-                .httpBasic().authenticationEntryPoint(jsonAccessDeniedHandler).and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and() //禁用SESSION
+                .httpBasic()
+                .authenticationEntryPoint(jsonAccessDeniedHandler).and()
                 .exceptionHandling().accessDeniedHandler(jsonAccessDeniedHandler).and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/user/signUp").permitAll()
@@ -57,6 +64,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated().accessDecisionManager(userAuthorityManager).and()
                 .logout().logoutUrl("/user/logout").addLogoutHandler(userLogoutHandler).logoutSuccessHandler(userLogoutHandler);
 
+        http.addFilterAt(tokenAuthFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterAt(userLoginFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
