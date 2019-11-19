@@ -1,7 +1,8 @@
 package com.example.dome.application.config;
 
-import com.example.dome.application.auth.UserAuthorityManager;
 import com.example.dome.application.auth.UserAuthProvider;
+import com.example.dome.application.auth.UserAuthorityVoter;
+import com.example.dome.application.auth.UserRoleSecurityMetadataSource;
 import com.example.dome.application.filter.TokenAuthFilter;
 import com.example.dome.application.filter.UserLoginFilter;
 import com.example.dome.application.handler.UserAccessDeniedHandler;
@@ -11,13 +12,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
+import org.springframework.security.web.access.expression.WebExpressionVoter;
+import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.Arrays;
 
 
 @Configuration
@@ -36,10 +43,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private UserAccessDeniedHandler jsonAccessDeniedHandler;
 
     @Autowired
-    private UserAuthorityManager userAuthorityManager;
-
-    @Autowired
     private TokenAuthFilter tokenAuthFilter;
+
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -61,11 +67,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/user/signUp").permitAll()
                 .antMatchers("/other/**").permitAll()
-                .anyRequest().authenticated().accessDecisionManager(userAuthorityManager).and()
+                .anyRequest().authenticated().accessDecisionManager(accessDecisionManager()).and()
                 .logout().logoutUrl("/user/logout").addLogoutHandler(userLogoutHandler).logoutSuccessHandler(userLogoutHandler);
 
         http.addFilterAt(tokenAuthFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterAt(userLoginFilter(), UsernamePasswordAuthenticationFilter.class);
+//        http.addFilterBefore()
     }
 
     public UserLoginFilter userLoginFilter() throws Exception {
@@ -74,6 +81,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         filter.setAuthenticationSuccessHandler(userLoginHandler);
         filter.setAuthenticationFailureHandler(userLoginHandler);
         return filter;
+    }
+
+    private AccessDecisionManager accessDecisionManager() {
+        return new UnanimousBased(Arrays.asList(new WebExpressionVoter(), new UserAuthorityVoter()));
     }
 
 }

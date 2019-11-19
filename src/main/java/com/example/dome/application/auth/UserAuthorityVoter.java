@@ -1,24 +1,32 @@
 package com.example.dome.application.auth;
 
-import org.springframework.security.access.AccessDecisionManager;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.ConfigAttribute;
-import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.FilterInvocation;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
 
-@Component
-public class UserAuthorityManager implements AccessDecisionManager {
+public class UserAuthorityVoter implements AccessDecisionVoter<FilterInvocation> {
+    @Override
+    public boolean supports(ConfigAttribute attribute) {
+        return true;
+    }
 
     @Override
-    public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
+    public boolean supports(Class<?> clazz) {
+        return FilterInvocation.class.isAssignableFrom(clazz);
+    }
 
-        HttpServletRequest request = ((FilterInvocation) object).getHttpRequest();
+    @Override
+    public int vote(Authentication authentication, FilterInvocation invocation, Collection<ConfigAttribute> attributes) {
+        if (!(authentication instanceof UserAuthToken)) {
+            return ACCESS_ABSTAIN;
+        }
+
+        HttpServletRequest request = invocation.getHttpRequest();
         String uri = request.getRequestURI();
 
         UserAuthDetails userAuthDetails = (UserAuthDetails) authentication.getPrincipal();
@@ -28,24 +36,15 @@ public class UserAuthorityManager implements AccessDecisionManager {
             String path = authority.getAuthority();
             if (path.endsWith("/**")) {
                 if (uri.startsWith(path.substring(0, path.length() - 3))) {
-                    return;
+                    return ACCESS_GRANTED;
                 }
             } else {
                 if (path.equals(uri)) {
-                    return;
+                    return ACCESS_GRANTED;
                 }
             }
         }
-        throw new AccessDeniedException("");
-    }
 
-    @Override
-    public boolean supports(ConfigAttribute attribute) {
-        return true;
-    }
-
-    @Override
-    public boolean supports(Class<?> clazz) {
-        return true;
+        return ACCESS_DENIED;
     }
 }
